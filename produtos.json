@@ -1,1 +1,66 @@
 
+{
+  "produtos": [
+    {
+      "id": "nextol-space-dodge",
+      "nome": "NEXTOL Space Dodge",
+      "categoria": "Jogos",
+      "descricao": "Um jogo espacial de reflexos e sobrevivência. Desvie dos obstáculos e tente alcançar a maior pontuação.",
+      "status": "Em desenvolvimento",
+      "imagem": "",
+      "download": "",
+      "destaque": true
+    },
+    {
+      "id": "pixel-adventure",
+      "nome": "Pixel Adventure",
+      "categoria": "Jogos",
+      "descricao": "Uma aventura em pixel art com exploração, desafios e descobertas.",
+      "status": "Em desenvolvimento",
+      "imagem": "",
+      "download": "",
+      "destaque": true
+    },
+    {
+      "id": "nextol-survival",
+      "nome": "NEXTOL Survival",
+      "categoria": "Jogos",
+      "descricao": "Um projeto de sobrevivência com exploração e coleta de recursos.",
+      "status": "Em planejamento",
+      "imagem": "",
+      "download": "",
+      "destaque": false
+    },
+    {
+      "id": "visual-collection",
+      "nome": "Visual Collection",
+      "categoria": "Artes",
+      "descricao": "Uma coleção de recursos visuais digitais para projetos criativos.",
+      "status": "Em desenvolvimento",
+      "imagem": "",
+      "download": "",
+      "destaque": true
+    },
+    {
+      "id": "nextol-tools",
+      "nome": "NEXTOL Tools",
+      "categoria": "Ferramentas",
+      "descricao": "Ferramentas digitais para facilitar tarefas e projetos.",
+      "status": "Em planejamento",
+      "imagem": "",
+      "download": "",
+      "destaque": false
+    },
+    {
+      "id": "pixel-resources",
+      "nome": "Pixel Resources",
+      "categoria": "Recursos",
+      "descricao": "Recursos de pixel art para criação de jogos e experiências digitais.",
+      "status": "Em breve",
+      "imagem": "",
+      "download": "",
+      "destaque": false
+    }
+  ]
+}
+
