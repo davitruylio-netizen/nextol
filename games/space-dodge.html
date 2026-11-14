@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NEXTOL Space Dodge</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050505;color:white;
+ font-family:Arial,sans-serif;overflow:hidden;
+ touch-action:none
+}
+#game{
+ width:100vw;height:100dvh;display:block;
+ background:radial-gradient(ellipse at center,#171717,#050505 75%)
+}
+#hud{
+ position:fixed;top:15px;left:15px;right:15px;
+ display:flex;justify-content:space-between;
+ pointer-events:none;font-weight:bold
+}
+.panel{
+ position:fixed;inset:0;display:flex;
+ flex-direction:column;justify-content:center;
+ align-items:center;text-align:center;
+ background:rgba(0,0,0,.78);padding:25px
+}
+h1{font-size:clamp(36px,9vw,65px);margin:0 0 10px}
+h1 span{color:#999}
+p{color:#aaa;line-height:1.6}
+button{
+ background:white;color:black;border:0;
+ padding:15px 30px;font-weight:bold;
+ border-radius:5px;font-size:15px;cursor:pointer
+}
+button:active{transform:scale(.96)}
+.hidden{display:none!important}
+#touch{
+ position:fixed;bottom:25px;left:0;right:0;
+ display:flex;justify-content:space-around;
+ pointer-events:none
+}
+.touch-btn{
+ width:75px;height:65px;border:1px solid #666;
+ background:#222;color:white;border-radius:12px;
+ display:grid;place-items:center;font-size:25px;
+ pointer-events:auto;opacity:.75;user-select:none
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+ <div>SCORE: <span id="score">0</span></div>
+ <div>RECORD: <span id="best">0</span></div>
+</div>
+
+<div id="menu" class="panel">
+ <h1>NEXTOL<span>.</span></h1>
+ <p>SPACE DODGE<br>Desvie dos asteroides e sobreviva!</p>
+ <button id="start">JOGAR</button>
+ <p>Use ← → ou A / D para movimentar</p>
+</div>
+
+<div id="over" class="panel hidden">
+ <h1>FIM DE JOGO</h1>
+ <p>Pontuação: <strong id="final">0</strong></p>
+ <button id="restart">JOGAR NOVAMENTE</button>
+</div>
+
+<div id="touch">
+ <div class="touch-btn" id="left">◀</div>
+ <div class="touch-btn" id="right">▶</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let W,H,player,rocks,stars,score,best;
+let running=false,last=0,spawn=0;
+let left=false,right=false;
+let frame=0;
+
+best=Number(localStorage.getItem("nextol-best")||0);
+document.getElementById("best").textContent=best;
+
+function resize(){
+ W=canvas.width=innerWidth*devicePixelRatio;
+ H=canvas.height=innerHeight*devicePixelRatio;
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.scale(devicePixelRatio,devicePixelRatio);
+ W=innerWidth;H=innerHeight;
+}
+addEventListener("resize",resize);
+resize();
+
+function init(){
+ player={x:W/2,y:H-100,r:17,speed:7};
+ rocks=[];
+ stars=Array.from({length:75},()=>({
+  x:Math.random()*W,y:Math.random()*H,
+  s:Math.random()*2+1
+ }));
+ score=0;spawn=0;frame=0;
+ document.getElementById("score").textContent=0;
+}
+
+function drawStars(){
+ ctx.fillStyle="white";
+ for(const s of stars){
+  ctx.globalAlpha=Math.random()*.5+.3;
+  ctx.fillRect(s.x,s.y,s.s,s.s);
+  s.y+=s.s*.7;
+  if(s.y>H){s.y=0;s.x=Math.random()*W}
+ }
+ ctx.globalAlpha=1;
+}
+
+function drawPlayer(){
+ ctx.save();
+ ctx.translate(player.x,player.y);
+ ctx.fillStyle="#fff";
+ ctx.shadowColor="#fff";
+ ctx.shadowBlur=18;
+ ctx.beginPath();
+ ctx.moveTo(0,-23);
+ ctx.lineTo(17,18);
+ ctx.lineTo(0,10);
+ ctx.lineTo(-17,18);
+ ctx.closePath();
+ ctx.fill();
+ ctx.fillStyle="#777";
+ ctx.fillRect(-4,15,8,12);
+ ctx.restore();
+}
+
+function spawnRock(){
+ const r=14+Math.random()*20;
+ rocks.push({
+  x:r+Math.random()*(W-2*r),
+  y:-r,r,
+  speed:2.5+Math.random()*2+score/350,
+  rotation:Math.random()*6,
+  spin:(Math.random()-.5)*.07
+ });
+}
+
+function drawRocks(){
+ for(const a of rocks){
+  ctx.save();
+  ctx.translate(a.x,a.y);
+  ctx.rotate(a.rotation);
+  ctx.strokeStyle="#aaa";
+  ctx.lineWidth=2;
+  ctx.fillStyle="#252525";
+  ctx.beginPath();
+  for(let i=0;i<9;i++){
+   const angle=i*Math.PI*2/9;
+   const radius=a.r*(.8+Math.sin(i*7)*.16);
+   const x=Math.cos(angle)*radius;
+   const y=Math.sin(angle)*radius;
+   if(i===0)ctx.moveTo(x,y);
+   else ctx.lineTo(x,y);
+  }
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.restore();
+
+  a.y+=a.speed;
+  a.rotation+=a.spin;
+ }
+ rocks=rocks.filter(a=>a.y<H+60);
+}
+
+function collision(a,b){
+ return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r*.78;
+}
+
+function endGame(){
+ running=false;
+ if(score>best){
+  best=score;
+  localStorage.setItem("nextol-best",best);
+ }
+ document.getElementById("best").textContent=best;
+ document.getElementById("final").textContent=score;
+ document.getElementById("over").classList.remove("hidden");
+}
+
+function update(dt){
+ frame++;
+ if(left)player.x-=player.speed;
+ if(right)player.x+=player.speed;
+ player.x=Math.max(22,Math.min(W-22,player.x));
+
+ spawn+=dt;
+ if(spawn>Math.max(240,850-score*1.5)){
+  spawn=0;spawnRock();
+ }
+ for(const a of rocks){
+  if(collision(player,a)){
+   endGame();return;
+  }
+ }
+ score+=Math.floor(dt/30);
+ document.getElementById("score").textContent=score;
+}
+
+function loop(time){
+ if(!running)return;
+ const dt=Math.min(time-last,40)||16;
+ last=time;
+ ctx.clearRect(0,0,W,H);
+ drawStars();
+ update(dt);
+ if(!running)return;
+ drawRocks();
+ drawPlayer();
+ requestAnimationFrame(loop);
+}
+
+function start(){
+ init();
+ document.getElementById("menu").classList.add("hidden");
+ document.getElementById("over").classList.add("hidden");
+ running=true;last=0;
+ requestAnimationFrame(loop);
+}
+
+document.getElementById("start").onclick=start;
+document.getElementById("restart").onclick=start;
+
+addEventListener("keydown",e=>{
+ if(["ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();
+ if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")left=true;
+ if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")right=true;
+});
+addEventListener("keyup",e=>{
+ if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")left=false;
+ if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")right=false;
+});
+
+function bindTouch(id,direction){
+ const el=document.getElementById(id);
+ el.addEventListener("pointerdown",e=>{
+  e.preventDefault();el.setPointerCapture(e.pointerId);
+  if(direction==="left")left=true;else right=true;
+ });
+ const stop=()=>{
+  if(direction==="left")left=false;else right=false;
+ };
+ el.addEventListener("pointerup",stop);
+ el.addEventListener("pointercancel",stop);
+ el.addEventListener("lostpointercapture",stop);
+}
+bindTouch("left","left");
+bindTouch("right","right");
+</script>
+</body>
+</html>
